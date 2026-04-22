@@ -440,7 +440,7 @@ async function callAPI(messages,maxTokens){
     method:'POST',
     headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
     body:JSON.stringify({
-      model:'claude-sonnet-4-20250514',
+      model:'claude-sonnet-4-5',
       max_tokens:maxTokens,
       system:'Tu es un expert en raisonnement logique et psychologie cognitive. Réponds toujours en français. Pour tout problème de séquence ou logique : vérifie TOUJOURS ta règle sur tous les éléments connus avant de conclure. Si elle échoue sur un seul élément, rejette-la et recommence.',
       messages
