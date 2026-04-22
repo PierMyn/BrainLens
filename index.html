@@ -3,20 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>BrainLens v1.1</title>
+<title>BrainLens v1.3</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&family=Lora:ital@0;1&display=swap');
-  :root {
-    --bg:#080810;--surface:#0f0f1a;--surface2:#161625;--surface3:#1e1e30;
-    --accent:#7cffb2;--accent-dim:rgba(124,255,178,0.12);--accent2:#ff6b6b;
-    --text:#e8e8f2;--text-muted:#5a5a7a;
-    --border:rgba(124,255,178,0.12);--border-bright:rgba(124,255,178,0.35);
-  }
+  :root{--bg:#080810;--surface:#0f0f1a;--surface2:#161625;--surface3:#1e1e30;--accent:#7cffb2;--accent-dim:rgba(124,255,178,0.12);--accent2:#ff6b6b;--text:#e8e8f2;--text-muted:#5a5a7a;--border:rgba(124,255,178,0.12);--border-bright:rgba(124,255,178,0.35)}
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:var(--bg);color:var(--text);font-family:'Lora',serif;min-height:100vh;overflow-x:hidden}
   body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(124,255,178,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(124,255,178,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
-
-  /* MODAL */
   .modal-overlay{position:fixed;inset:0;background:rgba(8,8,16,0.96);backdrop-filter:blur(10px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:1.5rem}
   .modal{background:var(--surface);border:1px solid var(--border-bright);border-radius:24px;padding:2.5rem;max-width:480px;width:100%;box-shadow:0 40px 120px rgba(0,0,0,0.6);animation:modalIn 0.4s ease}
   @keyframes modalIn{from{opacity:0;transform:translateY(20px) scale(0.97)}to{opacity:1;transform:translateY(0) scale(1)}}
@@ -35,8 +28,6 @@
   .modal-note{background:var(--accent-dim);border:1px solid var(--border);border-radius:10px;padding:0.8rem 1rem;font-family:'DM Mono',monospace;font-size:0.75rem;color:var(--accent);margin-bottom:1.5rem;line-height:1.6}
   .modal-btn{width:100%;padding:1rem;background:var(--accent);color:var(--bg);border:none;border-radius:12px;font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;cursor:pointer;transition:all 0.2s}
   .modal-btn:hover{box-shadow:0 8px 30px rgba(124,255,178,0.3);transform:translateY(-1px)}
-
-  /* APP SHELL */
   .app{display:none;flex-direction:column;height:100vh}
   .app.visible{display:flex}
   .app-header{padding:0.7rem 1.2rem;display:flex;align-items:center;gap:0.8rem;border-bottom:1px solid var(--border);position:relative;z-index:10;background:rgba(8,8,16,0.9);backdrop-filter:blur(10px);flex-shrink:0;flex-wrap:wrap}
@@ -52,49 +43,24 @@
   @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
   .analyzing-indicator{display:none;align-items:center;gap:0.4rem;font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--accent)}
   .analyzing-indicator.visible{display:flex}
-
-  /* BODY LAYOUT - results take most space */
   .app-body{display:flex;flex:1;overflow:hidden;position:relative;z-index:1}
   .left-panel{width:280px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
   .right-panel{flex:1;display:flex;flex-direction:column;overflow:hidden}
-
-  /* MINI PREVIEW - picture-in-picture style */
-  .pip-container{
-    position:relative;flex-shrink:0;
-    border-bottom:1px solid var(--border);
-    background:var(--surface);
-    transition:height 0.35s ease;
-    height:200px; /* default expanded */
-    overflow:hidden;
-  }
+  .pip-container{position:relative;flex-shrink:0;border-bottom:1px solid var(--border);background:var(--surface);transition:height 0.35s ease;height:200px;overflow:hidden}
   .pip-container.collapsed{height:36px}
   .pip-container.hidden{display:none}
-
   #screenVideo{width:100%;height:100%;object-fit:contain;display:none;padding-bottom:36px}
   #screenCanvas{display:none}
-
-  .pip-bar{
-    position:absolute;bottom:0;left:0;right:0;height:36px;
-    background:rgba(8,8,16,0.92);
-    border-top:1px solid var(--border);
-    display:flex;align-items:center;gap:0.5rem;
-    padding:0 0.8rem;z-index:5;
-  }
+  .pip-bar{position:absolute;bottom:0;left:0;right:0;height:36px;background:rgba(8,8,16,0.92);border-top:1px solid var(--border);display:flex;align-items:center;gap:0.5rem;padding:0 0.8rem;z-index:5}
   .pip-label{font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--text-muted);display:flex;align-items:center;gap:0.4rem}
   .pip-spacer{flex:1}
   .pip-btn{background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-muted);font-family:'DM Mono',monospace;font-size:0.65rem;padding:0.2rem 0.5rem;cursor:pointer;transition:all 0.2s;white-space:nowrap}
   .pip-btn:hover{border-color:var(--border-bright);color:var(--text)}
   .pip-btn.analyze{background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:500}
-  .pip-btn.analyze:hover{box-shadow:0 2px 12px rgba(124,255,178,0.3)}
-
   .screen-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:1rem;text-align:center}
   .screen-placeholder .big-icon{font-size:2rem;margin-bottom:0.5rem;opacity:0.3}
   .screen-placeholder p{color:var(--text-muted);font-size:0.78rem;line-height:1.5}
-
-  /* RESULTS — takes all remaining space */
   .results-area{flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:0.8rem}
-
-  /* LEFT PANEL */
   .panel-section{padding:0.9rem 1rem;border-bottom:1px solid var(--border)}
   .panel-label{font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.6rem}
   .ctrl-btn{display:flex;align-items:center;gap:0.4rem;padding:0.5rem 0.8rem;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);font-family:'DM Mono',monospace;font-size:0.7rem;cursor:pointer;transition:all 0.2s;white-space:nowrap;width:100%;margin-bottom:0.4rem}
@@ -121,8 +87,6 @@
   .example-pills{display:flex;flex-wrap:wrap;gap:0.35rem}
   .pill{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:0.3rem 0.65rem;font-size:0.72rem;color:var(--text-muted);cursor:pointer;transition:all 0.2s;font-family:'DM Mono',monospace}
   .pill:hover{border-color:var(--border-bright);color:var(--text)}
-
-  /* RESULT CARDS */
   .result-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;animation:cardIn 0.3s ease;flex-shrink:0}
   @keyframes cardIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
   .result-card.latest{border-color:var(--border-bright)}
@@ -144,43 +108,35 @@
   .empty-results{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem;color:var(--text-muted)}
   .empty-results .icon{font-size:2rem;margin-bottom:0.8rem;opacity:0.3}
   .empty-results p{font-size:0.82rem;line-height:1.6}
-
-  .toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:rgba(255,107,107,0.15);border:1px solid rgba(255,107,107,0.4);color:var(--accent2);border-radius:10px;padding:0.7rem 1.1rem;font-family:'DM Mono',monospace;font-size:0.78rem;z-index:999;display:none;max-width:90vw;text-align:center}
-  .mini-spinner{width:11px;height:11px;border:2px solid rgba(124,255,178,0.2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
-
   /* LIVE MODE */
   .live-toggle{display:none;align-items:center;gap:0.5rem;margin-top:0.5rem}
   .live-toggle.visible{display:flex}
   .live-switch{position:relative;width:36px;height:20px;flex-shrink:0}
-  .live-switch input{opacity:0;width:0;height:0}
+  .live-switch input{opacity:0;width:0;height:0;position:absolute}
   .live-slider{position:absolute;inset:0;background:var(--surface3);border-radius:20px;cursor:pointer;transition:0.3s;border:1px solid var(--border)}
   .live-slider:before{content:'';position:absolute;width:14px;height:14px;left:2px;top:2px;background:var(--text-muted);border-radius:50%;transition:0.3s}
   input:checked+.live-slider{background:rgba(124,255,178,0.25);border-color:var(--accent)}
   input:checked+.live-slider:before{transform:translateX(16px);background:var(--accent)}
   .live-label{font-family:'DM Mono',monospace;font-size:0.7rem;color:var(--text-muted)}
-  .live-label.active{color:var(--accent)}
-  .zone-hint{font-size:0.72rem;color:var(--text-muted);line-height:1.5;margin-top:0.5rem;display:none;font-family:'DM Mono',monospace}
+  .live-label.on{color:var(--accent)}
+  .zone-hint{font-size:0.72rem;color:var(--text-muted);line-height:1.5;margin-top:0.5rem;display:none;font-family:'DM Mono',monospace;background:var(--surface2);border-radius:8px;padding:0.5rem 0.7rem;border:1px solid var(--border)}
   .zone-hint.visible{display:block}
-  /* Zone selector overlay */
-  .zone-overlay{position:absolute;inset:0;cursor:crosshair;z-index:10;display:none}
-  .zone-overlay.active{display:block}
-  .zone-rect{position:absolute;border:2px solid var(--accent);background:rgba(124,255,178,0.08);pointer-events:none;display:none}
-  .zone-rect.visible{display:block}
-  .zone-label{position:absolute;top:-22px;left:0;font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--accent);background:rgba(8,8,16,0.85);padding:0.15rem 0.4rem;border-radius:4px;white-space:nowrap}
-  .live-indicator{display:none;align-items:center;gap:0.4rem;font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--accent);background:rgba(124,255,178,0.1);border:1px solid var(--border-bright);border-radius:6px;padding:0.25rem 0.6rem;margin-top:0.4rem}
+  .live-indicator{display:none;align-items:center;gap:0.4rem;font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--accent);background:rgba(124,255,178,0.08);border:1px solid var(--border-bright);border-radius:6px;padding:0.25rem 0.6rem;margin-top:0.4rem}
   .live-indicator.visible{display:flex}
-  .live-dot{width:6px;height:6px;border-radius:50%;background:var(--accent2);animation:livepulse 1s ease-in-out infinite}
+  .live-dot{width:6px;height:6px;border-radius:50%;background:var(--accent2);animation:livepulse 1s ease-in-out infinite;flex-shrink:0}
+  .live-dot.on{background:var(--accent)}
   @keyframes livepulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.7)}}
-  .live-dot.watching{background:var(--accent)}
-  @media(max-width:700px){
-    .left-panel{width:100%;border-right:none;border-bottom:1px solid var(--border);max-height:38vh}
-    .app-body{flex-direction:column}
-    .right-panel{min-height:62vh}
-    .pip-container{height:120px}
-    .pip-container.collapsed{height:36px}
-  }
+  /* Zone selector */
+  .zone-overlay{position:absolute;inset:0;bottom:36px;cursor:crosshair;z-index:10;display:none}
+  .zone-overlay.active{display:block}
+  .zone-rect{position:absolute;border:2px solid var(--accent);background:rgba(124,255,178,0.07);pointer-events:none;display:none;z-index:11}
+  .zone-rect.visible{display:block}
+  .zone-tag{position:absolute;top:-20px;left:0;font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--accent);background:rgba(8,8,16,0.9);padding:0.1rem 0.4rem;border-radius:4px;white-space:nowrap}
+  .toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:rgba(255,107,107,0.15);border:1px solid rgba(255,107,107,0.4);color:var(--accent2);border-radius:10px;padding:0.7rem 1.1rem;font-family:'DM Mono',monospace;font-size:0.78rem;z-index:999;display:none;max-width:90vw;text-align:center}
+  .mini-spinner{width:11px;height:11px;border:2px solid rgba(124,255,178,0.2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+  @media(max-width:700px){.left-panel{width:100%;border-right:none;border-bottom:1px solid var(--border);max-height:38vh}.app-body{flex-direction:column}.right-panel{min-height:62vh}.pip-container{height:120px}.pip-container.collapsed{height:36px}}
 </style>
 </head>
 <body>
@@ -192,7 +148,7 @@
       <div class="modal-logo-text">Brain<span>Lens</span></div>
     </div>
     <h2>Entre ta clé API Anthropic</h2>
-    <p>Utilisée uniquement dans ton navigateur pour appeler Claude directement. Jamais stockée ailleurs qu'en mémoire de session.<br><br>Crée ta clé sur <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> → API Keys.</p>
+    <p>Utilisée uniquement dans ton navigateur pour appeler Claude. Jamais stockée ailleurs.<br><br>Crée ta clé sur <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> → API Keys.</p>
     <div class="api-input-wrap">
       <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..." autocomplete="off" spellcheck="false">
       <button class="toggle-vis" onclick="toggleVis()">👁</button>
@@ -222,7 +178,6 @@
   </div>
 
   <div class="app-body">
-    <!-- LEFT -->
     <div class="left-panel">
       <div class="panel-section" id="screenControls">
         <div class="panel-label">Capture d'écran</div>
@@ -231,19 +186,27 @@
         <button class="ctrl-btn" id="analyzeBtn" onclick="analyzeScreen()" disabled>🧠 Analyser <span class="kbd">Espace</span></button>
         <p style="margin-top:0.6rem;font-size:0.74rem;color:var(--text-muted);line-height:1.5">Partage un onglet puis appuie sur <strong style="color:var(--text)">Espace</strong>.</p>
         <div class="live-toggle" id="liveToggleWrap">
-          <label class="live-switch"><input type="checkbox" id="liveSwitch" onchange="toggleLive()"><span class="live-slider"></span></label>
+          <label class="live-switch">
+            <input type="checkbox" id="liveSwitch" onchange="toggleLive()">
+            <span class="live-slider"></span>
+          </label>
           <span class="live-label" id="liveLabel">Mode live</span>
         </div>
-        <div class="zone-hint" id="zoneHint">📍 Clique et glisse sur la préview pour définir la zone à surveiller. Sans zone : toute l'image.</div>
-        <div class="live-indicator" id="liveIndicator"><div class="live-dot" id="liveDot"></div><span id="liveStatus">En attente...</span></div>
+        <div class="zone-hint visible" id="zoneHint" style="display:none">
+          📍 Clique-glisse sur la preview pour definir la zone a surveiller. Sans zone : image complete.
+        </div>
+        <div class="live-indicator" id="liveIndicator">
+          <div class="live-dot" id="liveDot"></div>
+          <span id="liveStatus">En attente...</span>
+        </div>
       </div>
 
       <div class="panel-section" id="manualControls" style="display:none">
         <div class="panel-label">Saisie manuelle</div>
         <div class="text-input-area">
-          <textarea id="problemText" placeholder="Colle ou tape l'énoncé ici..."></textarea>
+          <textarea id="problemText" placeholder="Colle ou tape l'enonce ici..."></textarea>
         </div>
-        <button class="solve-btn" onclick="solveText()">🧠 Résoudre</button>
+        <button class="solve-btn" onclick="solveText()">🧠 Resoudre</button>
       </div>
 
       <div class="panel-section" id="photoControls" style="display:none">
@@ -252,9 +215,9 @@
           <input type="file" id="fileUpload" accept="image/*" capture="environment">
           <div id="uploadPlaceholder">
             <p style="font-size:1.3rem;margin-bottom:0.3rem">📷</p>
-            <p>Clique ou <strong>dépose une image</strong></p>
+            <p>Clique ou <strong>depose une image</strong></p>
           </div>
-          <img id="uploadPreview" alt="Aperçu">
+          <img id="uploadPreview" alt="Apercu">
         </div>
         <button class="solve-btn" id="solvePhotoBtn" onclick="solvePhoto()" disabled>🧠 Analyser</button>
       </div>
@@ -266,37 +229,33 @@
           <div class="pill" onclick="quickEx(this)">Si A > B et B > C ?</div>
           <div class="pill" onclick="quickEx(this)">Chaud : Froid = Jour : ?</div>
           <div class="pill" onclick="quickEx(this)">Marie > Paul > Luc ?</div>
-          <div class="pill" onclick="quickEx(this)">14h → 17h30 = ?</div>
+          <div class="pill" onclick="quickEx(this)">14h a 17h30 = ?</div>
         </div>
       </div>
     </div>
 
-    <!-- RIGHT -->
     <div class="right-panel">
-
-      <!-- PIP video preview -->
       <div class="pip-container hidden" id="pipContainer">
         <div class="screen-placeholder" id="screenPH">
           <div class="big-icon">🖥</div>
-          <p>Clique "Partager" pour démarrer</p>
+          <p>Clique "Partager" pour demarrer</p>
         </div>
         <video id="screenVideo" autoplay muted playsinline></video>
         <canvas id="screenCanvas"></canvas>
         <div class="zone-overlay" id="zoneOverlay"></div>
-        <div class="zone-rect" id="zoneRect"><div class="zone-label">Zone surveillée</div></div>
+        <div class="zone-rect" id="zoneRect"><div class="zone-tag">Zone surveillee</div></div>
         <div class="pip-bar">
           <div class="pip-label"><div class="api-dot"></div> Capture active</div>
           <div class="pip-spacer"></div>
-          <button class="pip-btn" id="togglePipBtn" onclick="togglePip()">⬆ Réduire</button>
-          <button class="pip-btn analyze" onclick="analyzeScreen()">🧠 <span class="kbd" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.3);color:rgba(10,10,16,0.8)">Espace</span></button>
+          <button class="pip-btn" id="togglePipBtn" onclick="togglePip()">⬆ Reduire</button>
+          <button class="pip-btn analyze" onclick="analyzeScreen()">🧠 Espace</button>
         </div>
       </div>
 
-      <!-- Results — takes all remaining space -->
       <div class="results-area" id="resultsArea">
         <div class="empty-results" id="emptyRes">
           <div class="icon">💡</div>
-          <p>Les réponses apparaîtront ici.<br>Lance une analyse pour commencer.</p>
+          <p>Les reponses apparaitront ici.<br>Lance une analyse pour commencer.</p>
         </div>
       </div>
     </div>
@@ -306,254 +265,144 @@
 <div class="toast" id="toast"></div>
 
 <script>
-let apiKey='', screenStream=null, imgB64=null, imgType='image/jpeg', isAnalyzing=false, cardCount=0, pipCollapsed=false;
+var apiKey='', screenStream=null, imgB64=null, imgType='image/jpeg';
+var isAnalyzing=false, cardCount=0, pipCollapsed=false;
+var liveMode=false, liveInterval=null, lastFrameData=null, liveCooldown=false;
+var zoneRect=null, isDrawing=false, drawStart={x:0,y:0};
+var currentMode='screen';
 
-document.getElementById('apiKeyInput').addEventListener('keydown',e=>{if(e.key==='Enter')startApp();});
-function toggleVis(){const i=document.getElementById('apiKeyInput');i.type=i.type==='password'?'text':'password';}
+document.getElementById('apiKeyInput').addEventListener('keydown',function(e){
+  if(e.key==='Enter') startApp();
+});
+
+function toggleVis(){
+  var i=document.getElementById('apiKeyInput');
+  i.type=i.type==='password'?'text':'password';
+}
 
 function startApp(){
-  const k=document.getElementById('apiKeyInput').value.trim();
-  if(!k.startsWith('sk-ant-')){showToast('Clé invalide — doit commencer par sk-ant-');return;}
+  var k=document.getElementById('apiKeyInput').value.trim();
+  if(!k.startsWith('sk-ant-')){showToast('Cle invalide — doit commencer par sk-ant-');return;}
   apiKey=k;
   document.getElementById('modalOverlay').style.display='none';
   document.getElementById('app').classList.add('visible');
-  document.addEventListener('keydown',e=>{
+  document.addEventListener('keydown',function(e){
     if(e.code==='Space'&&e.target.tagName!=='TEXTAREA'&&e.target.tagName!=='INPUT'){
       e.preventDefault();
-      if(currentMode==='screen')analyzeScreen();
+      if(currentMode==='screen') analyzeScreen();
     }
   });
+  setupZoneDrawing();
 }
 
-function resetKey(){if(confirm('Changer de clé API ?'))location.reload();}
+function resetKey(){if(confirm('Changer de cle API ?')) location.reload();}
 
-let currentMode='screen';
 function setMode(m){
   currentMode=m;
-  ['screen','manual','photo'].forEach(x=>{
+  var modes=['screen','manual','photo'];
+  for(var i=0;i<modes.length;i++){
+    var x=modes[i];
     document.getElementById(x+'Controls').style.display=x===m?'block':'none';
-    document.getElementById('tab'+x.charAt(0).toUpperCase()+x.slice(1)).classList.toggle('active',x===m);
-  });
-  // Show/hide pip only in screen mode
-  const pip=document.getElementById('pipContainer');
-  if(m==='screen'){pip.classList.remove('hidden');}
-  else{pip.classList.add('hidden');}
+    var tab=document.getElementById('tab'+x.charAt(0).toUpperCase()+x.slice(1));
+    if(m===x) tab.classList.add('active'); else tab.classList.remove('active');
+  }
+  var pip=document.getElementById('pipContainer');
+  if(m==='screen') pip.classList.remove('hidden');
+  else pip.classList.add('hidden');
 }
 
-// PIP toggle
 function togglePip(){
-  const pip=document.getElementById('pipContainer');
-  const btn=document.getElementById('togglePipBtn');
+  var pip=document.getElementById('pipContainer');
+  var btn=document.getElementById('togglePipBtn');
   pipCollapsed=!pipCollapsed;
-  pip.classList.toggle('collapsed',pipCollapsed);
-  btn.textContent=pipCollapsed?'⬇ Agrandir':'⬆ Réduire';
+  if(pipCollapsed) pip.classList.add('collapsed'); else pip.classList.remove('collapsed');
+  btn.textContent=pipCollapsed?'⬇ Agrandir':'⬆ Reduire';
 }
 
 async function startCapture(){
   try{
     screenStream=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:5,cursor:'always'},audio:false});
-    const v=document.getElementById('screenVideo');
-    v.srcObject=screenStream;v.style.display='block';
+    var v=document.getElementById('screenVideo');
+    v.srcObject=screenStream; v.style.display='block';
     document.getElementById('screenPH').style.display='none';
     document.getElementById('startBtn').style.display='none';
     document.getElementById('stopBtn').style.display='flex';
     document.getElementById('analyzeBtn').disabled=false;
-    // Auto-expand pip
-    const pip=document.getElementById('pipContainer');
+    var pip=document.getElementById('pipContainer');
     pip.classList.remove('hidden','collapsed');
     pipCollapsed=false;
-    document.getElementById('togglePipBtn').textContent='⬆ Réduire';
-    screenStream.getVideoTracks()[0].addEventListener('ended',stopCapture);
+    document.getElementById('togglePipBtn').textContent='⬆ Reduire';
     document.getElementById('liveToggleWrap').classList.add('visible');
-  }catch(e){if(e.name!=='NotAllowedError')showToast('Impossible: '+e.message);}
+    screenStream.getVideoTracks()[0].addEventListener('ended',stopCapture);
+  }catch(e){
+    if(e.name!=='NotAllowedError') showToast('Impossible: '+e.message);
+  }
 }
 
 function stopCapture(){
-  if(liveMode){document.getElementById('liveSwitch').checked=false;liveMode=false;stopLiveWatch();document.getElementById('liveToggleWrap').classList.remove('visible');}
-  if(screenStream){screenStream.getTracks().forEach(t=>t.stop());screenStream=null;}
-  const v=document.getElementById('screenVideo');v.srcObject=null;v.style.display='none';
+  if(liveMode){
+    document.getElementById('liveSwitch').checked=false;
+    liveMode=false;
+    stopLiveWatch();
+    document.getElementById('liveToggleWrap').classList.remove('visible');
+    document.getElementById('liveIndicator').classList.remove('visible');
+    document.getElementById('zoneHint').style.display='none';
+  }
+  if(screenStream){screenStream.getTracks().forEach(function(t){t.stop();});screenStream=null;}
+  var v=document.getElementById('screenVideo');v.srcObject=null;v.style.display='none';
   document.getElementById('screenPH').style.display='flex';
   document.getElementById('startBtn').style.display='flex';
   document.getElementById('stopBtn').style.display='none';
   document.getElementById('analyzeBtn').disabled=true;
   document.getElementById('pipContainer').classList.add('hidden');
+  document.getElementById('zoneOverlay').classList.remove('active');
+  document.getElementById('zoneRect').classList.remove('visible');
+  zoneRect=null; lastFrameData=null;
 }
 
 function captureFrame(){
-  const v=document.getElementById('screenVideo'),c=document.getElementById('screenCanvas');
-  c.width=v.videoWidth;c.height=v.videoHeight;
+  var v=document.getElementById('screenVideo'),c=document.getElementById('screenCanvas');
+  c.width=v.videoWidth; c.height=v.videoHeight;
   c.getContext('2d').drawImage(v,0,0);
   return c.toDataURL('image/jpeg',0.85).split(',')[1];
 }
 
 async function analyzeScreen(){
-  if(!screenStream||isAnalyzing)return;
-  await analyze({img:captureFrame(),mt:'image/jpeg',src:'écran'});
+  if(!screenStream||isAnalyzing) return;
+  await analyze({img:captureFrame(),mt:'image/jpeg',src:'ecran'});
 }
-
-document.getElementById('fileUpload').addEventListener('change',e=>{if(e.target.files[0])handleFile(e.target.files[0]);});
-const uz=document.getElementById('uploadZone');
-uz.addEventListener('dragover',e=>{e.preventDefault();uz.style.borderColor='var(--border-bright)';});
-uz.addEventListener('dragleave',()=>{uz.style.borderColor='';});
-uz.addEventListener('drop',e=>{e.preventDefault();uz.style.borderColor='';if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);});
-
-function handleFile(file){
-  imgType=file.type||'image/jpeg';
-  const r=new FileReader();
-  r.onload=e=>{
-    imgB64=e.target.result.split(',')[1];
-    const p=document.getElementById('uploadPreview');
-    p.src=e.target.result;p.style.display='block';
-    document.getElementById('uploadPlaceholder').style.display='none';
-    document.getElementById('uploadZone').classList.add('has-img');
-    document.getElementById('solvePhotoBtn').disabled=false;
-  };
-  r.readAsDataURL(file);
-}
-
-async function solvePhoto(){if(!imgB64||isAnalyzing)return;await analyze({img:imgB64,mt:imgType,src:'photo'});}
-async function solveText(){const t=document.getElementById('problemText').value.trim();if(!t||isAnalyzing)return;await analyze({text:t,src:'texte'});}
-function quickEx(el){setMode('manual');document.getElementById('problemText').value=el.textContent;solveText();}
-
-function buildPrompt(text){
-  return `Problème : "${text}"
-
-INSTRUCTIONS (ordre strict) :
-1. Identifie le type de problème.
-2. Analyse chaque élément un par un.
-3. Formule une règle candidate.
-4. VÉRIFIE cette règle sur TOUS les éléments connus. Si elle échoue sur un seul, rejette-la et recommence.
-5. Applique la règle vérifiée pour trouver la réponse.
-6. En toute dernière ligne, écris UNIQUEMENT ce JSON :
-{"type":"[catégorie 3 mots max]","answer":"[réponse concise]"}`;
-}
-
-async function analyze({img,mt,text,src}){
-  isAnalyzing=true;
-  document.getElementById('analyzingInd').classList.add('visible');
-  document.getElementById('emptyRes').style.display='none';
-  document.querySelectorAll('.result-card.latest').forEach(c=>c.classList.remove('latest'));
-  const content=[];
-  if(img)content.push({type:'image',source:{type:'base64',media_type:mt,data:img}});
-  const prompt=text?buildPrompt(text):'Identifie et résous le problème cognitif visible dans cette image.\n\n'+buildPrompt('(voir image)');
-  content.push({type:'text',text:prompt});
-  try{
-    const data=await callAPI([{role:'user',content}],900);
-    const raw=data.content.map(b=>b.text||'').join('\n').trim();
-    const lines=raw.split('\n').filter(l=>l.trim());
-    let parsed=null;
-    for(let i=lines.length-1;i>=0;i--){
-      const l=lines[i].trim().replace(/```json|```/g,'').trim();
-      if(l.startsWith('{')){try{parsed=JSON.parse(l);break;}catch{}}
-    }
-    if(!parsed)parsed={type:src,answer:lines[lines.length-1]};
-    parsed._raw=raw;
-    addCard(parsed,src);
-  }catch(e){showToast('Erreur : '+(e.message||'Vérifie ta clé API'));}
-  finally{isAnalyzing=false;document.getElementById('analyzingInd').classList.remove('visible');}
-}
-
-function addCard(parsed,src){
-  cardCount++;
-  const id='c'+cardCount;
-  const t=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  const card=document.createElement('div');
-  card.className='result-card latest';card.id=id;
-  card.innerHTML=`
-    <div class="result-card-header">
-      <span class="result-type-badge">${parsed.type||src}</span>
-      <span class="result-timestamp">${t}</span>
-    </div>
-    <div class="result-card-body">
-      <div class="result-answer">${parsed.answer||'—'}</div>
-      <button class="explain-toggle" onclick="toggleExp('${id}',this)" data-raw="${encodeURIComponent(parsed._raw||'')}">
-        💡 Voir le raisonnement <span class="arr">▾</span>
-      </button>
-      <div class="explanation-body" id="exp-${id}">
-        <div class="explanation-content" id="expc-${id}"></div>
-      </div>
-    </div>`;
-  const area=document.getElementById('resultsArea');
-  area.insertBefore(card,area.firstChild);
-  card.scrollIntoView({behavior:'smooth',block:'nearest'});
-}
-
-async function toggleExp(id,btn){
-  const panel=document.getElementById('exp-'+id);
-  const content=document.getElementById('expc-'+id);
-  if(!panel.classList.contains('open')){
-    panel.classList.add('open');btn.classList.add('open');
-    if(!content.dataset.loaded){
-      content.innerHTML='<div style="display:flex;align-items:center;gap:0.5rem;color:var(--text-muted);font-family:\'DM Mono\',monospace;font-size:0.78rem;padding:0.4rem 0"><div class="mini-spinner"></div>Mise en forme...</div>';
-      const raw=decodeURIComponent(btn.dataset.raw);
-      try{
-        const data=await callAPI([{role:'user',content:[{type:'text',text:`Reformate ce raisonnement de façon pédagogique en étapes numérotées claires. Type de problème, étapes, puis une phrase sur l'intérêt cognitif. Pas de JSON. Français uniquement.\n\n---\n${raw}`}]}],600);
-        content.innerHTML=fmtExp(data.content.map(b=>b.text||'').join('\n'));
-      }catch{content.innerHTML=fmtExp(raw);}
-      content.dataset.loaded='1';
-    }
-  }else{panel.classList.remove('open');btn.classList.remove('open');}
-}
-
-function fmtExp(text){
-  const lines=text.split('\n').filter(l=>l.trim());
-  let html='',step=0;
-  lines.forEach(line=>{
-    const t=line.trim();
-    if(!t||t.startsWith('{'))return;
-    if(t.match(/^[-•]\s*[ÉéEe]tape/i)||t.match(/^\d+[\.\)]/)){
-      step++;
-      const c=t.replace(/^[-•]\s*(étape\s*\d*\s*:?\s*)?/i,'').replace(/^\d+[\.\)]\s*/,'');
-      html+=`<div class="step-block"><span class="step-num">Étape ${step}</span>${c}</div>`;
-    }else{html+=`<p class="exp-para">${t}</p>`;}
-  });
-  return html||`<p class="exp-para">${text}</p>`;
-}
-
-async function callAPI(messages,maxTokens){
-  const r=await fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-    body:JSON.stringify({
-      model:'claude-sonnet-4-5',
-      max_tokens:maxTokens,
-      system:'Tu es un expert en raisonnement logique et psychologie cognitive. Réponds TOUJOURS dans la même langue que le problème posé (français si la question est en français, anglais si en anglais, etc.). Pour tout problème de séquence ou logique : vérifie TOUJOURS ta règle sur tous les éléments connus avant de conclure. Si elle échoue sur un seul élément, rejette-la et recommence.',
-      messages
-    })
-  });
-  const d=await r.json();
-  if(d.error)throw new Error(d.error.message);
-  return d;
-}
-
 
 // ── LIVE MODE ──
-let liveMode=false, liveInterval=null, lastFrameData=null, liveCooldown=false;
-let zoneRect=null; // {x,y,w,h} in % of video dimensions
-
 function toggleLive(){
   liveMode=document.getElementById('liveSwitch').checked;
-  const label=document.getElementById('liveLabel');
-  const hint=document.getElementById('zoneHint');
-  const ind=document.getElementById('liveIndicator');
+  var label=document.getElementById('liveLabel');
+  var hint=document.getElementById('zoneHint');
+  var ind=document.getElementById('liveIndicator');
+  var overlay=document.getElementById('zoneOverlay');
+
   label.textContent=liveMode?'Live actif':'Mode live';
-  label.classList.toggle('active',liveMode);
-  hint.classList.toggle('visible',liveMode);
-  ind.classList.toggle('visible',liveMode);
+  if(liveMode) label.classList.add('on'); else label.classList.remove('on');
+  hint.style.display=liveMode?'block':'none';
+  if(liveMode) ind.classList.add('visible'); else ind.classList.remove('visible');
+
   if(liveMode){
-    if(!screenStream){showToast('Démarre la capture d'écran d'abord');document.getElementById('liveSwitch').checked=false;liveMode=false;return;}
+    if(!screenStream){
+      showToast('Demarre la capture ecran en premier');
+      document.getElementById('liveSwitch').checked=false;
+      liveMode=false;
+      return;
+    }
+    overlay.classList.add('active');
     startLiveWatch();
-    // Enable zone drawing
-    document.getElementById('zoneOverlay').classList.add('active');
   } else {
+    overlay.classList.remove('active');
     stopLiveWatch();
-    document.getElementById('zoneOverlay').classList.remove('active');
   }
 }
 
 function startLiveWatch(){
-  lastFrameData=null;liveCooldown=false;
-  setLiveStatus('👁 Surveillance active','watching');
+  lastFrameData=null; liveCooldown=false;
+  setLiveStatus('👁 Surveillance active','on');
   liveInterval=setInterval(checkFrame,3000);
 }
 
@@ -563,134 +412,226 @@ function stopLiveWatch(){
   setLiveStatus('En attente...','');
 }
 
-function setLiveStatus(msg,dotClass){
+function setLiveStatus(msg,dotCls){
   document.getElementById('liveStatus').textContent=msg;
-  const dot=document.getElementById('liveDot');
-  dot.className='live-dot'+(dotClass?' '+dotClass:'');
+  var dot=document.getElementById('liveDot');
+  dot.className='live-dot'+(dotCls?' '+dotCls:'');
 }
 
 function checkFrame(){
-  if(!screenStream||isAnalyzing||liveCooldown)return;
-  const v=document.getElementById('screenVideo');
-  const c=document.getElementById('screenCanvas');
-  c.width=v.videoWidth;c.height=v.videoHeight;
-  const ctx=c.getContext('2d');
+  if(!screenStream||isAnalyzing||liveCooldown) return;
+  var v=document.getElementById('screenVideo');
+  var c=document.getElementById('screenCanvas');
+  c.width=v.videoWidth; c.height=v.videoHeight;
+  var ctx=c.getContext('2d');
   ctx.drawImage(v,0,0);
 
-  // Extract zone or full image
-  let sx=0,sy=0,sw=c.width,sh=c.height;
+  var sx=0,sy=0,sw=c.width,sh=c.height;
   if(zoneRect){
     sx=Math.round(zoneRect.x*c.width);
     sy=Math.round(zoneRect.y*c.height);
     sw=Math.round(zoneRect.w*c.width);
     sh=Math.round(zoneRect.h*c.height);
   }
-  if(sw<10||sh<10)return;
+  if(sw<10||sh<10) return;
 
-  const imgData=ctx.getImageData(sx,sy,sw,sh);
-  const pixels=imgData.data;
+  var imgData=ctx.getImageData(sx,sy,sw,sh);
+  var pixels=imgData.data;
 
   if(!lastFrameData){lastFrameData=new Uint8ClampedArray(pixels);return;}
 
-  // Compare pixels - sample every 4th pixel for speed
-  let diff=0,total=0;
-  for(let i=0;i<pixels.length;i+=16){
-    const d=Math.abs(pixels[i]-lastFrameData[i])+Math.abs(pixels[i+1]-lastFrameData[i+1])+Math.abs(pixels[i+2]-lastFrameData[i+2]);
-    if(d>30)diff++; // threshold per channel
+  var diff=0,total=0;
+  for(var i=0;i<pixels.length;i+=16){
+    var d=Math.abs(pixels[i]-lastFrameData[i])+Math.abs(pixels[i+1]-lastFrameData[i+1])+Math.abs(pixels[i+2]-lastFrameData[i+2]);
+    if(d>30) diff++;
     total++;
   }
-  const pct=diff/total;
   lastFrameData=new Uint8ClampedArray(pixels);
 
-  // 15% of sampled pixels changed = new question
+  var pct=total>0?diff/total:0;
   if(pct>0.15){
-    setLiveStatus('🔍 Changement détecté!','watching');
+    setLiveStatus('🔍 Changement detecte!','on');
     liveCooldown=true;
-    setTimeout(()=>{liveCooldown=false;},8000); // 8s cooldown
-    // Capture full frame for analysis
-    const full=c.toDataURL('image/jpeg',0.85).split(',')[1];
+    setTimeout(function(){liveCooldown=false;setLiveStatus('👁 Surveillance active','on');},8000);
+    var full=c.toDataURL('image/jpeg',0.85).split(',')[1];
     analyze({img:full,mt:'image/jpeg',src:'live'});
   }
 }
 
 // ── ZONE SELECTOR ──
-let isDrawing=false,drawStart={x:0,y:0};
+function setupZoneDrawing(){
+  var overlay=document.getElementById('zoneOverlay');
+  var rectEl=document.getElementById('zoneRect');
 
-document.addEventListener('DOMContentLoaded',()=>{
-  const overlay=document.getElementById('zoneOverlay');
-  const rectEl=document.getElementById('zoneRect');
-  const pip=document.getElementById('pipContainer');
-
-  overlay.addEventListener('mousedown',e=>{
+  overlay.addEventListener('mousedown',function(e){
     isDrawing=true;
-    const r=overlay.getBoundingClientRect();
+    var r=overlay.getBoundingClientRect();
     drawStart={x:e.clientX-r.left,y:e.clientY-r.top};
-    rectEl.style.left=drawStart.x+'px';
-    rectEl.style.top=drawStart.y+'px';
-    rectEl.style.width='0px';rectEl.style.height='0px';
+    rectEl.style.left=drawStart.x+'px';rectEl.style.top=drawStart.y+'px';
+    rectEl.style.width='0';rectEl.style.height='0';
     rectEl.classList.add('visible');
     e.preventDefault();
   });
 
-  overlay.addEventListener('mousemove',e=>{
-    if(!isDrawing)return;
-    const r=overlay.getBoundingClientRect();
-    const cx=e.clientX-r.left, cy=e.clientY-r.top;
-    const x=Math.min(cx,drawStart.x), y=Math.min(cy,drawStart.y);
-    const w=Math.abs(cx-drawStart.x), h=Math.abs(cy-drawStart.y);
+  overlay.addEventListener('mousemove',function(e){
+    if(!isDrawing) return;
+    var r=overlay.getBoundingClientRect();
+    var cx=e.clientX-r.left,cy=e.clientY-r.top;
+    var x=Math.min(cx,drawStart.x),y=Math.min(cy,drawStart.y);
     rectEl.style.left=x+'px';rectEl.style.top=y+'px';
-    rectEl.style.width=w+'px';rectEl.style.height=h+'px';
+    rectEl.style.width=Math.abs(cx-drawStart.x)+'px';
+    rectEl.style.height=Math.abs(cy-drawStart.y)+'px';
   });
 
-  overlay.addEventListener('mouseup',e=>{
-    if(!isDrawing)return;
+  overlay.addEventListener('mouseup',function(e){
+    if(!isDrawing) return;
     isDrawing=false;
-    const r=overlay.getBoundingClientRect();
-    const cx=e.clientX-r.left, cy=e.clientY-r.top;
-    const x=Math.min(cx,drawStart.x), y=Math.min(cy,drawStart.y);
-    const w=Math.abs(cx-drawStart.x), h=Math.abs(cy-drawStart.y);
-    if(w<20||h<20){zoneRect=null;rectEl.classList.remove('visible');setLiveStatus('👁 Zone: image complète','watching');return;}
-    // Convert to % of pip container (approximation)
-    zoneRect={x:x/r.width, y:y/r.height, w:w/r.width, h:h/r.height};
-    setLiveStatus('📍 Zone définie — surveillance active','watching');
-    lastFrameData=null; // reset comparison
-  });
-
-  // Touch support for mobile
-  overlay.addEventListener('touchstart',e=>{
-    const t=e.touches[0],r=overlay.getBoundingClientRect();
-    isDrawing=true;
-    drawStart={x:t.clientX-r.left,y:t.clientY-r.top};
-    e.preventDefault();
-  },{passive:false});
-  overlay.addEventListener('touchmove',e=>{
-    if(!isDrawing)return;
-    const t=e.touches[0],r=overlay.getBoundingClientRect();
-    const cx=t.clientX-r.left,cy=t.clientY-r.top;
-    const x=Math.min(cx,drawStart.x),y=Math.min(cy,drawStart.y);
-    const w=Math.abs(cx-drawStart.x),h=Math.abs(cy-drawStart.y);
-    const rectEl=document.getElementById('zoneRect');
-    rectEl.style.left=x+'px';rectEl.style.top=y+'px';
-    rectEl.style.width=w+'px';rectEl.style.height=h+'px';
-    rectEl.classList.add('visible');
-    e.preventDefault();
-  },{passive:false});
-  overlay.addEventListener('touchend',e=>{
-    isDrawing=false;
-    const t=e.changedTouches[0],r=overlay.getBoundingClientRect();
-    const cx=t.clientX-r.left,cy=t.clientY-r.top;
-    const x=Math.min(cx,drawStart.x),y=Math.min(cy,drawStart.y);
-    const w=Math.abs(cx-drawStart.x),h=Math.abs(cy-drawStart.y);
-    if(w<20||h<20){zoneRect=null;return;}
+    var r=overlay.getBoundingClientRect();
+    var cx=e.clientX-r.left,cy=e.clientY-r.top;
+    var x=Math.min(cx,drawStart.x),y=Math.min(cy,drawStart.y);
+    var w=Math.abs(cx-drawStart.x),h=Math.abs(cy-drawStart.y);
+    if(w<20||h<20){zoneRect=null;rectEl.classList.remove('visible');setLiveStatus('👁 Image complete surveillee','on');return;}
     zoneRect={x:x/r.width,y:y/r.height,w:w/r.width,h:h/r.height};
     lastFrameData=null;
-    setLiveStatus('📍 Zone définie — surveillance active','watching');
+    setLiveStatus('📍 Zone definie — surveillance active','on');
   });
-});
+}
 
-// Stop live when capture stops
-const _origStop=stopCapture;
-function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>{t.style.display='none';},4000);}
+// ── PHOTO / UPLOAD ──
+document.getElementById('fileUpload').addEventListener('change',function(e){
+  if(e.target.files[0]) handleFile(e.target.files[0]);
+});
+var uz=document.getElementById('uploadZone');
+uz.addEventListener('dragover',function(e){e.preventDefault();uz.style.borderColor='var(--border-bright)';});
+uz.addEventListener('dragleave',function(){uz.style.borderColor='';});
+uz.addEventListener('drop',function(e){e.preventDefault();uz.style.borderColor='';if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);});
+
+function handleFile(file){
+  imgType=file.type||'image/jpeg';
+  var r=new FileReader();
+  r.onload=function(e){
+    imgB64=e.target.result.split(',')[1];
+    var p=document.getElementById('uploadPreview');
+    p.src=e.target.result; p.style.display='block';
+    document.getElementById('uploadPlaceholder').style.display='none';
+    document.getElementById('uploadZone').classList.add('has-img');
+    document.getElementById('solvePhotoBtn').disabled=false;
+  };
+  r.readAsDataURL(file);
+}
+
+async function solvePhoto(){if(!imgB64||isAnalyzing)return;await analyze({img:imgB64,mt:imgType,src:'photo'});}
+async function solveText(){var t=document.getElementById('problemText').value.trim();if(!t||isAnalyzing)return;await analyze({text:t,src:'texte'});}
+function quickEx(el){setMode('manual');document.getElementById('problemText').value=el.textContent;solveText();}
+
+function buildPrompt(text){
+  return 'Probleme : "'+text+'"\n\nINSTRUCTIONS (ordre strict) :\n1. Identifie le type de probleme.\n2. Analyse chaque element un par un.\n3. Formule une regle candidate.\n4. VERIFIE cette regle sur TOUS les elements connus. Si elle echoue sur un seul, rejette-la et recommence.\n5. Applique la regle verifiee pour trouver la reponse.\n6. En toute derniere ligne, ecris UNIQUEMENT ce JSON :\n{"type":"[categorie 3 mots max]","answer":"[reponse concise]"}';
+}
+
+async function analyze(opts){
+  isAnalyzing=true;
+  document.getElementById('analyzingInd').classList.add('visible');
+  document.getElementById('emptyRes').style.display='none';
+  document.querySelectorAll('.result-card.latest').forEach(function(c){c.classList.remove('latest');});
+
+  var content=[];
+  if(opts.img) content.push({type:'image',source:{type:'base64',media_type:opts.mt,data:opts.img}});
+  var prompt=opts.text?buildPrompt(opts.text):'Identifie et resous le probleme cognitif visible dans cette image.\n\n'+buildPrompt('(voir image)');
+  content.push({type:'text',text:prompt});
+
+  try{
+    var data=await callAPI([{role:'user',content:content}],900);
+    var raw=data.content.map(function(b){return b.text||'';}).join('\n').trim();
+    var lines=raw.split('\n').filter(function(l){return l.trim();});
+    var parsed=null;
+    for(var i=lines.length-1;i>=0;i--){
+      var l=lines[i].trim().replace(/```json|```/g,'').trim();
+      if(l.startsWith('{')){try{parsed=JSON.parse(l);break;}catch(e){}}
+    }
+    if(!parsed) parsed={type:opts.src,answer:lines[lines.length-1]};
+    parsed._raw=raw;
+    addCard(parsed,opts.src);
+  }catch(e){
+    showToast('Erreur : '+(e.message||'Verifie ta cle API'));
+  }finally{
+    isAnalyzing=false;
+    document.getElementById('analyzingInd').classList.remove('visible');
+  }
+}
+
+function addCard(parsed,src){
+  cardCount++;
+  var id='c'+cardCount;
+  var t=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  var card=document.createElement('div');
+  card.className='result-card latest'; card.id=id;
+  var rawEnc=encodeURIComponent(parsed._raw||'');
+  card.innerHTML='<div class="result-card-header"><span class="result-type-badge">'+(parsed.type||src)+'</span><span class="result-timestamp">'+t+'</span></div>'
+    +'<div class="result-card-body"><div class="result-answer">'+(parsed.answer||'—')+'</div>'
+    +'<button class="explain-toggle" onclick="toggleExp(\''+id+'\',this)" data-raw="'+rawEnc+'">💡 Voir le raisonnement <span class="arr">▾</span></button>'
+    +'<div class="explanation-body" id="exp-'+id+'"><div class="explanation-content" id="expc-'+id+'"></div></div></div>';
+  var area=document.getElementById('resultsArea');
+  area.insertBefore(card,area.firstChild);
+  card.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+async function toggleExp(id,btn){
+  var panel=document.getElementById('exp-'+id);
+  var content=document.getElementById('expc-'+id);
+  if(!panel.classList.contains('open')){
+    panel.classList.add('open'); btn.classList.add('open');
+    if(!content.dataset.loaded){
+      content.innerHTML='<div style="display:flex;align-items:center;gap:0.5rem;color:var(--text-muted);font-family:\'DM Mono\',monospace;font-size:0.78rem;padding:0.4rem 0"><div class="mini-spinner"></div>Mise en forme...</div>';
+      var raw=decodeURIComponent(btn.dataset.raw);
+      try{
+        var data=await callAPI([{role:'user',content:[{type:'text',text:'Reformate ce raisonnement de facon pedagogique en etapes numerotees claires. Type de probleme, etapes, puis une phrase sur l interet cognitif. Pas de JSON. Meme langue que le probleme.\n\n---\n'+raw}]}],600);
+        content.innerHTML=fmtExp(data.content.map(function(b){return b.text||'';}).join('\n'));
+      }catch(e){content.innerHTML=fmtExp(raw);}
+      content.dataset.loaded='1';
+    }
+  }else{
+    panel.classList.remove('open'); btn.classList.remove('open');
+  }
+}
+
+function fmtExp(text){
+  var lines=text.split('\n').filter(function(l){return l.trim();});
+  var html='',step=0;
+  lines.forEach(function(line){
+    var t=line.trim();
+    if(!t||t.startsWith('{')) return;
+    if(t.match(/^[-•]\s*[EeÉé]tape/i)||t.match(/^\d+[\.\)]/)){
+      step++;
+      var c=t.replace(/^[-•]\s*(etape\s*\d*\s*:?\s*)?/i,'').replace(/^\d+[\.\)]\s*/,'');
+      html+='<div class="step-block"><span class="step-num">Etape '+step+'</span>'+c+'</div>';
+    }else{
+      html+='<p class="exp-para">'+t+'</p>';
+    }
+  });
+  return html||'<p class="exp-para">'+text+'</p>';
+}
+
+async function callAPI(messages,maxTokens){
+  var r=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({
+      model:'claude-sonnet-4-5',
+      max_tokens:maxTokens,
+      system:'Tu es un expert en raisonnement logique et psychologie cognitive. Reponds TOUJOURS dans la meme langue que le probleme pose. Pour tout probleme de sequence ou logique : verifie TOUJOURS ta regle sur tous les elements connus avant de conclure. Si elle echoue sur un seul element, rejette-la et recommence.',
+      messages:messages
+    })
+  });
+  var d=await r.json();
+  if(d.error) throw new Error(d.error.message);
+  return d;
+}
+
+function showToast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg; t.style.display='block';
+  setTimeout(function(){t.style.display='none';},4000);
+}
 
 setMode('screen');
 </script>
