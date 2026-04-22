@@ -353,8 +353,6 @@ function captureFrame(){
 
 async function analyzeScreen(){
   if(!screenStream||isAnalyzing)return;
-  // Auto-collapse pip when analyzing so results are visible
-  if(!pipCollapsed){togglePip();}
   await analyze({img:captureFrame(),mt:'image/jpeg',src:'écran'});
 }
 
@@ -484,7 +482,7 @@ async function callAPI(messages,maxTokens){
     body:JSON.stringify({
       model:'claude-sonnet-4-5',
       max_tokens:maxTokens,
-      system:'Tu es un expert en raisonnement logique et psychologie cognitive. Réponds toujours en français. Pour tout problème de séquence ou logique : vérifie TOUJOURS ta règle sur tous les éléments connus avant de conclure. Si elle échoue sur un seul élément, rejette-la et recommence.',
+      system:'Tu es un expert en raisonnement logique et psychologie cognitive. Réponds TOUJOURS dans la même langue que le problème posé (français si la question est en français, anglais si en anglais, etc.). Pour tout problème de séquence ou logique : vérifie TOUJOURS ta règle sur tous les éléments connus avant de conclure. Si elle échoue sur un seul élément, rejette-la et recommence.',
       messages
     })
   });
