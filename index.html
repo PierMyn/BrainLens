@@ -266,7 +266,7 @@
 
 <script>
 var apiKey='', screenStream=null, imgB64=null, imgType='image/jpeg';
-var isAnalyzing=false, cardCount=0, pipCollapsed=false;
+var analyzeCount=0, cardCount=0, pipCollapsed=false;
 var liveMode=false, liveInterval=null, lastFrameData=null, liveCooldown=false;
 var zoneRect=null, isDrawing=false, drawStart={x:0,y:0};
 var currentMode='screen';
@@ -368,7 +368,7 @@ function captureFrame(){
 }
 
 async function analyzeScreen(){
-  if(!screenStream||isAnalyzing) return;
+  if(!screenStream||analyzeCount>=1) return;
   await analyze({img:captureFrame(),mt:'image/jpeg',src:'ecran'});
 }
 
@@ -419,7 +419,7 @@ function setLiveStatus(msg,dotCls){
 }
 
 function checkFrame(){
-  if(!screenStream||isAnalyzing||liveCooldown) return;
+  if(!screenStream||liveCooldown||analyzeCount>=2) return;
   var v=document.getElementById('screenVideo');
   var c=document.getElementById('screenCanvas');
   c.width=v.videoWidth; c.height=v.videoHeight;
@@ -452,7 +452,7 @@ function checkFrame(){
   if(pct>0.15){
     setLiveStatus('🔍 Changement detecte!','on');
     liveCooldown=true;
-    setTimeout(function(){liveCooldown=false;setLiveStatus('👁 Surveillance active','on');},8000);
+    setTimeout(function(){liveCooldown=false;setLiveStatus('👁 Surveillance active','on');},10000);
     var full=c.toDataURL('image/jpeg',0.85).split(',')[1];
     analyze({img:full,mt:'image/jpeg',src:'live'});
   }
@@ -520,8 +520,8 @@ function handleFile(file){
   r.readAsDataURL(file);
 }
 
-async function solvePhoto(){if(!imgB64||isAnalyzing)return;await analyze({img:imgB64,mt:imgType,src:'photo'});}
-async function solveText(){var t=document.getElementById('problemText').value.trim();if(!t||isAnalyzing)return;await analyze({text:t,src:'texte'});}
+async function solvePhoto(){if(!imgB64||analyzeCount>=1)return;await analyze({img:imgB64,mt:imgType,src:'photo'});}
+async function solveText(){var t=document.getElementById('problemText').value.trim();if(!t||analyzeCount>=1)return;await analyze({text:t,src:'texte'});}
 function quickEx(el){setMode('manual');document.getElementById('problemText').value=el.textContent;solveText();}
 
 function buildPrompt(text){
@@ -529,7 +529,7 @@ function buildPrompt(text){
 }
 
 async function analyze(opts){
-  isAnalyzing=true;
+  analyzeCount++;
   document.getElementById('analyzingInd').classList.add('visible');
   document.getElementById('emptyRes').style.display='none';
   document.querySelectorAll('.result-card.latest').forEach(function(c){c.classList.remove('latest');});
@@ -554,8 +554,8 @@ async function analyze(opts){
   }catch(e){
     showToast('Erreur : '+(e.message||'Verifie ta cle API'));
   }finally{
-    isAnalyzing=false;
-    document.getElementById('analyzingInd').classList.remove('visible');
+    analyzeCount=Math.max(0,analyzeCount-1);
+    if(analyzeCount===0) document.getElementById('analyzingInd').classList.remove('visible');
   }
 }
 
@@ -612,19 +612,29 @@ function fmtExp(text){
 }
 
 async function callAPI(messages,maxTokens){
-  var r=await fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-    body:JSON.stringify({
-      model:'claude-sonnet-4-5',
-      max_tokens:maxTokens,
-      system:'Tu es un expert en raisonnement logique et psychologie cognitive. Reponds TOUJOURS dans la meme langue que le probleme pose. Pour tout probleme de sequence ou logique : verifie TOUJOURS ta regle sur tous les elements connus avant de conclure. Si elle echoue sur un seul element, rejette-la et recommence.',
-      messages:messages
-    })
-  });
-  var d=await r.json();
-  if(d.error) throw new Error(d.error.message);
-  return d;
+  var controller=new AbortController();
+  var timeout=setTimeout(function(){controller.abort();},25000);
+  try{
+    var r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      signal:controller.signal,
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-5',
+        max_tokens:maxTokens,
+        system:'Tu es un expert en raisonnement logique et psychologie cognitive. Reponds TOUJOURS dans la meme langue que le probleme pose. Pour tout probleme de sequence ou logique : verifie TOUJOURS ta regle sur tous les elements connus avant de conclure. Si elle echoue sur un seul element, rejette-la et recommence.',
+        messages:messages
+      })
+    });
+    var d=await r.json();
+    if(d.error) throw new Error(d.error.message);
+    return d;
+  }catch(e){
+    if(e.name==='AbortError') throw new Error('Timeout : analyse trop longue (>25s)');
+    throw e;
+  }finally{
+    clearTimeout(timeout);
+  }
 }
 
 function showToast(msg){
