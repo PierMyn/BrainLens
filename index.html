@@ -149,6 +149,31 @@
   .mini-spinner{width:11px;height:11px;border:2px solid rgba(124,255,178,0.2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
   ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+  /* LIVE MODE */
+  .live-toggle{display:none;align-items:center;gap:0.5rem;margin-top:0.5rem}
+  .live-toggle.visible{display:flex}
+  .live-switch{position:relative;width:36px;height:20px;flex-shrink:0}
+  .live-switch input{opacity:0;width:0;height:0}
+  .live-slider{position:absolute;inset:0;background:var(--surface3);border-radius:20px;cursor:pointer;transition:0.3s;border:1px solid var(--border)}
+  .live-slider:before{content:'';position:absolute;width:14px;height:14px;left:2px;top:2px;background:var(--text-muted);border-radius:50%;transition:0.3s}
+  input:checked+.live-slider{background:rgba(124,255,178,0.25);border-color:var(--accent)}
+  input:checked+.live-slider:before{transform:translateX(16px);background:var(--accent)}
+  .live-label{font-family:'DM Mono',monospace;font-size:0.7rem;color:var(--text-muted)}
+  .live-label.active{color:var(--accent)}
+  .zone-hint{font-size:0.72rem;color:var(--text-muted);line-height:1.5;margin-top:0.5rem;display:none;font-family:'DM Mono',monospace}
+  .zone-hint.visible{display:block}
+  /* Zone selector overlay */
+  .zone-overlay{position:absolute;inset:0;cursor:crosshair;z-index:10;display:none}
+  .zone-overlay.active{display:block}
+  .zone-rect{position:absolute;border:2px solid var(--accent);background:rgba(124,255,178,0.08);pointer-events:none;display:none}
+  .zone-rect.visible{display:block}
+  .zone-label{position:absolute;top:-22px;left:0;font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--accent);background:rgba(8,8,16,0.85);padding:0.15rem 0.4rem;border-radius:4px;white-space:nowrap}
+  .live-indicator{display:none;align-items:center;gap:0.4rem;font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--accent);background:rgba(124,255,178,0.1);border:1px solid var(--border-bright);border-radius:6px;padding:0.25rem 0.6rem;margin-top:0.4rem}
+  .live-indicator.visible{display:flex}
+  .live-dot{width:6px;height:6px;border-radius:50%;background:var(--accent2);animation:livepulse 1s ease-in-out infinite}
+  @keyframes livepulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.7)}}
+  .live-dot.watching{background:var(--accent)}
   @media(max-width:700px){
     .left-panel{width:100%;border-right:none;border-bottom:1px solid var(--border);max-height:38vh}
     .app-body{flex-direction:column}
@@ -205,6 +230,12 @@
         <button class="ctrl-btn danger" id="stopBtn" onclick="stopCapture()" style="display:none">⏹ Arrêter</button>
         <button class="ctrl-btn" id="analyzeBtn" onclick="analyzeScreen()" disabled>🧠 Analyser <span class="kbd">Espace</span></button>
         <p style="margin-top:0.6rem;font-size:0.74rem;color:var(--text-muted);line-height:1.5">Partage un onglet puis appuie sur <strong style="color:var(--text)">Espace</strong>.</p>
+        <div class="live-toggle" id="liveToggleWrap">
+          <label class="live-switch"><input type="checkbox" id="liveSwitch" onchange="toggleLive()"><span class="live-slider"></span></label>
+          <span class="live-label" id="liveLabel">Mode live</span>
+        </div>
+        <div class="zone-hint" id="zoneHint">📍 Clique et glisse sur la préview pour définir la zone à surveiller. Sans zone : toute l'image.</div>
+        <div class="live-indicator" id="liveIndicator"><div class="live-dot" id="liveDot"></div><span id="liveStatus">En attente...</span></div>
       </div>
 
       <div class="panel-section" id="manualControls" style="display:none">
@@ -251,6 +282,8 @@
         </div>
         <video id="screenVideo" autoplay muted playsinline></video>
         <canvas id="screenCanvas"></canvas>
+        <div class="zone-overlay" id="zoneOverlay"></div>
+        <div class="zone-rect" id="zoneRect"><div class="zone-label">Zone surveillée</div></div>
         <div class="pip-bar">
           <div class="pip-label"><div class="api-dot"></div> Capture active</div>
           <div class="pip-spacer"></div>
@@ -331,10 +364,12 @@ async function startCapture(){
     pipCollapsed=false;
     document.getElementById('togglePipBtn').textContent='⬆ Réduire';
     screenStream.getVideoTracks()[0].addEventListener('ended',stopCapture);
+    document.getElementById('liveToggleWrap').classList.add('visible');
   }catch(e){if(e.name!=='NotAllowedError')showToast('Impossible: '+e.message);}
 }
 
 function stopCapture(){
+  if(liveMode){document.getElementById('liveSwitch').checked=false;liveMode=false;stopLiveWatch();document.getElementById('liveToggleWrap').classList.remove('visible');}
   if(screenStream){screenStream.getTracks().forEach(t=>t.stop());screenStream=null;}
   const v=document.getElementById('screenVideo');v.srcObject=null;v.style.display='none';
   document.getElementById('screenPH').style.display='flex';
@@ -491,6 +526,170 @@ async function callAPI(messages,maxTokens){
   return d;
 }
 
+
+// ── LIVE MODE ──
+let liveMode=false, liveInterval=null, lastFrameData=null, liveCooldown=false;
+let zoneRect=null; // {x,y,w,h} in % of video dimensions
+
+function toggleLive(){
+  liveMode=document.getElementById('liveSwitch').checked;
+  const label=document.getElementById('liveLabel');
+  const hint=document.getElementById('zoneHint');
+  const ind=document.getElementById('liveIndicator');
+  label.textContent=liveMode?'Live actif':'Mode live';
+  label.classList.toggle('active',liveMode);
+  hint.classList.toggle('visible',liveMode);
+  ind.classList.toggle('visible',liveMode);
+  if(liveMode){
+    if(!screenStream){showToast('Démarre la capture d'écran d'abord');document.getElementById('liveSwitch').checked=false;liveMode=false;return;}
+    startLiveWatch();
+    // Enable zone drawing
+    document.getElementById('zoneOverlay').classList.add('active');
+  } else {
+    stopLiveWatch();
+    document.getElementById('zoneOverlay').classList.remove('active');
+  }
+}
+
+function startLiveWatch(){
+  lastFrameData=null;liveCooldown=false;
+  setLiveStatus('👁 Surveillance active','watching');
+  liveInterval=setInterval(checkFrame,3000);
+}
+
+function stopLiveWatch(){
+  if(liveInterval){clearInterval(liveInterval);liveInterval=null;}
+  lastFrameData=null;
+  setLiveStatus('En attente...','');
+}
+
+function setLiveStatus(msg,dotClass){
+  document.getElementById('liveStatus').textContent=msg;
+  const dot=document.getElementById('liveDot');
+  dot.className='live-dot'+(dotClass?' '+dotClass:'');
+}
+
+function checkFrame(){
+  if(!screenStream||isAnalyzing||liveCooldown)return;
+  const v=document.getElementById('screenVideo');
+  const c=document.getElementById('screenCanvas');
+  c.width=v.videoWidth;c.height=v.videoHeight;
+  const ctx=c.getContext('2d');
+  ctx.drawImage(v,0,0);
+
+  // Extract zone or full image
+  let sx=0,sy=0,sw=c.width,sh=c.height;
+  if(zoneRect){
+    sx=Math.round(zoneRect.x*c.width);
+    sy=Math.round(zoneRect.y*c.height);
+    sw=Math.round(zoneRect.w*c.width);
+    sh=Math.round(zoneRect.h*c.height);
+  }
+  if(sw<10||sh<10)return;
+
+  const imgData=ctx.getImageData(sx,sy,sw,sh);
+  const pixels=imgData.data;
+
+  if(!lastFrameData){lastFrameData=new Uint8ClampedArray(pixels);return;}
+
+  // Compare pixels - sample every 4th pixel for speed
+  let diff=0,total=0;
+  for(let i=0;i<pixels.length;i+=16){
+    const d=Math.abs(pixels[i]-lastFrameData[i])+Math.abs(pixels[i+1]-lastFrameData[i+1])+Math.abs(pixels[i+2]-lastFrameData[i+2]);
+    if(d>30)diff++; // threshold per channel
+    total++;
+  }
+  const pct=diff/total;
+  lastFrameData=new Uint8ClampedArray(pixels);
+
+  // 15% of sampled pixels changed = new question
+  if(pct>0.15){
+    setLiveStatus('🔍 Changement détecté!','watching');
+    liveCooldown=true;
+    setTimeout(()=>{liveCooldown=false;},8000); // 8s cooldown
+    // Capture full frame for analysis
+    const full=c.toDataURL('image/jpeg',0.85).split(',')[1];
+    analyze({img:full,mt:'image/jpeg',src:'live'});
+  }
+}
+
+// ── ZONE SELECTOR ──
+let isDrawing=false,drawStart={x:0,y:0};
+
+document.addEventListener('DOMContentLoaded',()=>{
+  const overlay=document.getElementById('zoneOverlay');
+  const rectEl=document.getElementById('zoneRect');
+  const pip=document.getElementById('pipContainer');
+
+  overlay.addEventListener('mousedown',e=>{
+    isDrawing=true;
+    const r=overlay.getBoundingClientRect();
+    drawStart={x:e.clientX-r.left,y:e.clientY-r.top};
+    rectEl.style.left=drawStart.x+'px';
+    rectEl.style.top=drawStart.y+'px';
+    rectEl.style.width='0px';rectEl.style.height='0px';
+    rectEl.classList.add('visible');
+    e.preventDefault();
+  });
+
+  overlay.addEventListener('mousemove',e=>{
+    if(!isDrawing)return;
+    const r=overlay.getBoundingClientRect();
+    const cx=e.clientX-r.left, cy=e.clientY-r.top;
+    const x=Math.min(cx,drawStart.x), y=Math.min(cy,drawStart.y);
+    const w=Math.abs(cx-drawStart.x), h=Math.abs(cy-drawStart.y);
+    rectEl.style.left=x+'px';rectEl.style.top=y+'px';
+    rectEl.style.width=w+'px';rectEl.style.height=h+'px';
+  });
+
+  overlay.addEventListener('mouseup',e=>{
+    if(!isDrawing)return;
+    isDrawing=false;
+    const r=overlay.getBoundingClientRect();
+    const cx=e.clientX-r.left, cy=e.clientY-r.top;
+    const x=Math.min(cx,drawStart.x), y=Math.min(cy,drawStart.y);
+    const w=Math.abs(cx-drawStart.x), h=Math.abs(cy-drawStart.y);
+    if(w<20||h<20){zoneRect=null;rectEl.classList.remove('visible');setLiveStatus('👁 Zone: image complète','watching');return;}
+    // Convert to % of pip container (approximation)
+    zoneRect={x:x/r.width, y:y/r.height, w:w/r.width, h:h/r.height};
+    setLiveStatus('📍 Zone définie — surveillance active','watching');
+    lastFrameData=null; // reset comparison
+  });
+
+  // Touch support for mobile
+  overlay.addEventListener('touchstart',e=>{
+    const t=e.touches[0],r=overlay.getBoundingClientRect();
+    isDrawing=true;
+    drawStart={x:t.clientX-r.left,y:t.clientY-r.top};
+    e.preventDefault();
+  },{passive:false});
+  overlay.addEventListener('touchmove',e=>{
+    if(!isDrawing)return;
+    const t=e.touches[0],r=overlay.getBoundingClientRect();
+    const cx=t.clientX-r.left,cy=t.clientY-r.top;
+    const x=Math.min(cx,drawStart.x),y=Math.min(cy,drawStart.y);
+    const w=Math.abs(cx-drawStart.x),h=Math.abs(cy-drawStart.y);
+    const rectEl=document.getElementById('zoneRect');
+    rectEl.style.left=x+'px';rectEl.style.top=y+'px';
+    rectEl.style.width=w+'px';rectEl.style.height=h+'px';
+    rectEl.classList.add('visible');
+    e.preventDefault();
+  },{passive:false});
+  overlay.addEventListener('touchend',e=>{
+    isDrawing=false;
+    const t=e.changedTouches[0],r=overlay.getBoundingClientRect();
+    const cx=t.clientX-r.left,cy=t.clientY-r.top;
+    const x=Math.min(cx,drawStart.x),y=Math.min(cy,drawStart.y);
+    const w=Math.abs(cx-drawStart.x),h=Math.abs(cy-drawStart.y);
+    if(w<20||h<20){zoneRect=null;return;}
+    zoneRect={x:x/r.width,y:y/r.height,w:w/r.width,h:h/r.height};
+    lastFrameData=null;
+    setLiveStatus('📍 Zone définie — surveillance active','watching');
+  });
+});
+
+// Stop live when capture stops
+const _origStop=stopCapture;
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>{t.style.display='none';},4000);}
 
 setMode('screen');
