@@ -449,7 +449,7 @@ function checkFrame(){
   lastFrameData=new Uint8ClampedArray(pixels);
 
   var pct=total>0?diff/total:0;
-  if(pct>0.15){
+  if(pct>0.05){
     setLiveStatus('🔍 Changement detecte!','on');
     liveCooldown=true;
     setTimeout(function(){liveCooldown=false;setLiveStatus('👁 Surveillance active','on');},10000);
