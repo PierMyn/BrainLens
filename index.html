@@ -136,13 +136,13 @@
   .mini-spinner{width:11px;height:11px;border:2px solid rgba(124,255,178,0.2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
   ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
-  .left-scroll{flex:1;overflow-y:auto;}
+  .left-scroll{overflow-y:auto;flex-shrink:0;max-height:60%;}
   /* RESIZER */
   .resizer{width:5px;background:var(--border);cursor:col-resize;flex-shrink:0;transition:background 0.2s;position:relative;z-index:5}
   .resizer:hover,.resizer.dragging{background:var(--accent)}
   .resizer::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:1px;height:30px;background:currentColor;border-radius:1px}
   /* PIP in left panel */
-  .pip-container{flex-shrink:0;border-top:1px solid var(--border);background:var(--surface);overflow:hidden;position:relative;height:180px;min-height:36px;transition:none;resize:vertical}
+  .pip-container{flex:1;border-top:1px solid var(--border);background:var(--surface);overflow:hidden;position:relative;min-height:100px;}
   .pip-container.hidden{display:none}
   .pip-container.collapsed{height:36px}
   #screenVideo{width:100%;height:100%;object-fit:contain;display:none;padding-bottom:36px}
@@ -330,10 +330,8 @@ function setMode(m){
 
 function togglePip(){
   var pip=document.getElementById('pipContainer');
-  var btn=document.getElementById('togglePipBtn');
   pipCollapsed=!pipCollapsed;
   if(pipCollapsed) pip.classList.add('collapsed'); else pip.classList.remove('collapsed');
-  btn.textContent=pipCollapsed?'⬇ Agrandir':'⬆ Reduire';
 }
 
 async function startCapture(){
@@ -348,7 +346,6 @@ async function startCapture(){
     var pip=document.getElementById('pipContainer');
     pip.classList.remove('hidden','collapsed');
     pipCollapsed=false;
-    document.getElementById('togglePipBtn').textContent='⬆ Reduire';
     document.getElementById('liveToggleWrap').classList.add('visible');
     screenStream.getVideoTracks()[0].addEventListener('ended',stopCapture);
   }catch(e){
