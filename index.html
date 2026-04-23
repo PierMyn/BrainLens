@@ -136,7 +136,21 @@
   .mini-spinner{width:11px;height:11px;border:2px solid rgba(124,255,178,0.2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
   ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
-  @media(max-width:700px){.left-panel{width:100%;border-right:none;border-bottom:1px solid var(--border);max-height:38vh}.app-body{flex-direction:column}.right-panel{min-height:62vh}.pip-container{height:120px}.pip-container.collapsed{height:36px}}
+  /* RESIZER */
+  .resizer{width:5px;background:var(--border);cursor:col-resize;flex-shrink:0;transition:background 0.2s;position:relative;z-index:5}
+  .resizer:hover,.resizer.dragging{background:var(--accent)}
+  .resizer::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:1px;height:30px;background:currentColor;border-radius:1px}
+  /* PIP in left panel */
+  .pip-container{flex-shrink:0;border-top:1px solid var(--border);background:var(--surface);overflow:hidden;position:relative;height:200px;transition:height 0.3s ease}
+  .pip-container.hidden{display:none}
+  .pip-container.collapsed{height:36px}
+  #screenVideo{width:100%;height:100%;object-fit:contain;display:none;padding-bottom:36px}
+  .pip-bar{position:absolute;bottom:0;left:0;right:0;height:36px;background:rgba(8,8,16,0.92);border-top:1px solid var(--border);display:flex;align-items:center;gap:0.5rem;padding:0 0.8rem;z-index:5}
+  .pip-label{font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--text-muted);display:flex;align-items:center;gap:0.4rem}
+  .pip-spacer{flex:1}
+  .pip-btn{background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-muted);font-family:'DM Mono',monospace;font-size:0.65rem;padding:0.2rem 0.5rem;cursor:pointer;transition:all 0.2s;white-space:nowrap}
+  .pip-btn.analyze{background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:500}
+    @media(max-width:700px){.left-panel{width:100%;border-right:none;border-bottom:1px solid var(--border);max-height:38vh}.app-body{flex-direction:column}.right-panel{min-height:62vh}.pip-container{height:120px !important}.pip-container.collapsed{height:36px !important}.resizer{display:none}}
 </style>
 </head>
 <body>
@@ -211,12 +225,13 @@
 
       <div class="panel-section" id="photoControls" style="display:none">
         <div class="panel-label">Photo / image</div>
-        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileUpload').click()">
-          <input type="file" id="fileUpload" accept="image/*" capture="environment">
-          <div id="uploadPlaceholder">
-            <p style="font-size:1.3rem;margin-bottom:0.3rem">📷</p>
-            <p>Clique ou <strong>depose une image</strong></p>
-          </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;margin-bottom:0.5rem">
+          <button class="ctrl-btn primary" onclick="document.getElementById('fileCamera').click()">📷 Camera</button>
+          <button class="ctrl-btn" onclick="document.getElementById('fileGallery').click()">🖼 Galerie</button>
+        </div>
+        <input type="file" id="fileCamera" accept="image/*" capture="environment" style="display:none">
+        <input type="file" id="fileGallery" accept="image/*" style="display:none">
+        <div class="upload-zone has-img" id="uploadZone" style="display:none">
           <img id="uploadPreview" alt="Apercu">
         </div>
         <button class="solve-btn" id="solvePhotoBtn" onclick="solvePhoto()" disabled>🧠 Analyser</button>
@@ -232,13 +247,10 @@
           <div class="pill" onclick="quickEx(this)">14h a 17h30 = ?</div>
         </div>
       </div>
-    </div>
-
-    <div class="right-panel">
       <div class="pip-container hidden" id="pipContainer">
         <div class="screen-placeholder" id="screenPH">
           <div class="big-icon">🖥</div>
-          <p>Clique "Partager" pour demarrer</p>
+          <p>Clique Partager pour demarrer</p>
         </div>
         <video id="screenVideo" autoplay muted playsinline></video>
         <canvas id="screenCanvas"></canvas>
@@ -247,11 +259,13 @@
         <div class="pip-bar">
           <div class="pip-label"><div class="api-dot"></div> Capture active</div>
           <div class="pip-spacer"></div>
-          <button class="pip-btn" id="togglePipBtn" onclick="togglePip()">⬆ Reduire</button>
           <button class="pip-btn analyze" onclick="analyzeScreen()">🧠 Espace</button>
         </div>
       </div>
+    </div>
+    <div class="resizer" id="resizer"></div>
 
+    <div class="right-panel">
       <div class="results-area" id="resultsArea">
         <div class="empty-results" id="emptyRes">
           <div class="icon">💡</div>
@@ -498,8 +512,10 @@ function setupZoneDrawing(){
 }
 
 // ── PHOTO / UPLOAD ──
-document.getElementById('fileUpload').addEventListener('change',function(e){
-  if(e.target.files[0]) handleFile(e.target.files[0]);
+['fileCamera','fileGallery'].forEach(function(id){
+  document.getElementById(id).addEventListener('change',function(e){
+    if(e.target.files[0]) handleFile(e.target.files[0]);
+  });
 });
 var uz=document.getElementById('uploadZone');
 uz.addEventListener('dragover',function(e){e.preventDefault();uz.style.borderColor='var(--border-bright)';});
@@ -514,7 +530,7 @@ function handleFile(file){
     var p=document.getElementById('uploadPreview');
     p.src=e.target.result; p.style.display='block';
     document.getElementById('uploadPlaceholder').style.display='none';
-    document.getElementById('uploadZone').classList.add('has-img');
+    document.getElementById('uploadZone').style.display='block';
     document.getElementById('solvePhotoBtn').disabled=false;
   };
   r.readAsDataURL(file);
@@ -636,6 +652,42 @@ async function callAPI(messages,maxTokens){
     clearTimeout(timeout);
   }
 }
+
+
+// ── RESIZER ──
+(function(){
+  var resizer=document.getElementById('resizer');
+  var leftPanel=document.querySelector('.left-panel');
+  var appBody=document.querySelector('.app-body');
+  if(!resizer||!leftPanel) return;
+  var isDragging=false, startX=0, startW=0;
+
+  resizer.addEventListener('mousedown',function(e){
+    isDragging=true;
+    startX=e.clientX;
+    startW=leftPanel.offsetWidth;
+    resizer.classList.add('dragging');
+    document.body.style.cursor='col-resize';
+    document.body.style.userSelect='none';
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove',function(e){
+    if(!isDragging) return;
+    var dx=e.clientX-startX;
+    var newW=Math.min(Math.max(startW+dx,180),600);
+    leftPanel.style.width=newW+'px';
+    leftPanel.style.flexShrink='0';
+  });
+
+  document.addEventListener('mouseup',function(){
+    if(!isDragging) return;
+    isDragging=false;
+    resizer.classList.remove('dragging');
+    document.body.style.cursor='';
+    document.body.style.userSelect='';
+  });
+})();
 
 function showToast(msg){
   var t=document.getElementById('toast');
