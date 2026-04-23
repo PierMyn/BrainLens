@@ -44,7 +44,7 @@
   .analyzing-indicator{display:none;align-items:center;gap:0.4rem;font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--accent)}
   .analyzing-indicator.visible{display:flex}
   .app-body{display:flex;flex:1;overflow:hidden;position:relative;z-index:1}
-  .left-panel{width:280px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
+  .left-panel{width:280px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
   .right-panel{flex:1;display:flex;flex-direction:column;overflow:hidden}
   .pip-container{position:relative;flex-shrink:0;border-bottom:1px solid var(--border);background:var(--surface);transition:height 0.35s ease;height:200px;overflow:hidden}
   .pip-container.collapsed{height:36px}
@@ -136,12 +136,13 @@
   .mini-spinner{width:11px;height:11px;border:2px solid rgba(124,255,178,0.2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
   ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+  .left-scroll{flex:1;overflow-y:auto;}
   /* RESIZER */
   .resizer{width:5px;background:var(--border);cursor:col-resize;flex-shrink:0;transition:background 0.2s;position:relative;z-index:5}
   .resizer:hover,.resizer.dragging{background:var(--accent)}
   .resizer::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:1px;height:30px;background:currentColor;border-radius:1px}
   /* PIP in left panel */
-  .pip-container{flex-shrink:0;border-top:1px solid var(--border);background:var(--surface);overflow:hidden;position:relative;height:200px;transition:height 0.3s ease}
+  .pip-container{flex-shrink:0;border-top:1px solid var(--border);background:var(--surface);overflow:hidden;position:relative;height:180px;min-height:36px;transition:none;resize:vertical}
   .pip-container.hidden{display:none}
   .pip-container.collapsed{height:36px}
   #screenVideo{width:100%;height:100%;object-fit:contain;display:none;padding-bottom:36px}
@@ -193,6 +194,7 @@
 
   <div class="app-body">
     <div class="left-panel">
+      <div class="left-scroll">
       <div class="panel-section" id="screenControls">
         <div class="panel-label">Capture d'écran</div>
         <button class="ctrl-btn primary" id="startBtn" onclick="startCapture()">🖥 Partager mon écran / onglet</button>
@@ -246,6 +248,7 @@
           <div class="pill" onclick="quickEx(this)">Marie > Paul > Luc ?</div>
           <div class="pill" onclick="quickEx(this)">14h a 17h30 = ?</div>
         </div>
+      </div>
       </div>
       <div class="pip-container hidden" id="pipContainer">
         <div class="screen-placeholder" id="screenPH">
