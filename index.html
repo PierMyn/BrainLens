@@ -531,6 +531,8 @@ function handleFile(file){
     p.src=e.target.result; p.style.display='block';
     document.getElementById('uploadZone').style.display='block';
     document.getElementById('solvePhotoBtn').disabled=false;
+    // Auto-launch on mobile (touch device)
+    if('ontouchstart' in window){ solvePhoto(); }
   };
   r.readAsDataURL(file);
 }
