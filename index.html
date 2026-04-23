@@ -529,7 +529,6 @@ function handleFile(file){
     imgB64=e.target.result.split(',')[1];
     var p=document.getElementById('uploadPreview');
     p.src=e.target.result; p.style.display='block';
-    document.getElementById('uploadPlaceholder').style.display='none';
     document.getElementById('uploadZone').style.display='block';
     document.getElementById('solvePhotoBtn').disabled=false;
   };
